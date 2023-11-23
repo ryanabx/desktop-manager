@@ -1,4 +1,4 @@
 # Linux Desktop Manager
 
-A command-line tool written in rust to manage your .desktop files!
+A command-line tool written in Pythin to manage your .desktop files!
 
