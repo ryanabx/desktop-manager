@@ -1,5 +1,5 @@
 # desktop-manager.py
-# Copyright Ryan Brue 2022
+# Copyright Ryan Brue 2023
 
 VERSION = "0.0.1"
 
