@@ -127,7 +127,7 @@ def uninstall(args):
     desktop_path, valid = get_desktop_path(args.name)
     if valid:
         desktop_path.unlink()
-    print(f'{SUCCESS} Successfully uninstalld {args.name}.')
+    print(f'{SUCCESS} Successfully uninstalled {args.name}.')
 
 def list(args):
     pass
