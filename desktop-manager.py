@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# desktop-manager.py
+# desktop-manager
 # Copyright Ryan Brue 2023
 
 VERSION = "0.0.1"
@@ -36,6 +36,9 @@ def populate_desktop_file_string(
     ret_str += f'Icon={icon}\n' if icon else ""
     ret_str += f'Exec={exec}\n' if exec else ""
     return ret_str
+
+def load_from_desktop_file_string(desktop_text: str) -> dict:
+    pass
 
 # File actions
 
