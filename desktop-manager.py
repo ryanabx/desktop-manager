@@ -10,6 +10,9 @@ from pathlib import Path
 from colorama import Fore, Back, Style
 import os
 
+import tkinter as tk
+from tkinter import filedialog
+
 SUCCESS = f'[{Fore.GREEN}SUCCESS{Fore.RESET}]'
 PROMPT = f'[{Fore.YELLOW}PROMPT{Fore.RESET}]'
 NOTICE = f'[{Fore.RED}NOTICE{Fore.RESET}]'
@@ -70,8 +73,10 @@ def move_file(from_path: Path, to_folder: Path, copy=False):
 
 def get_installed(name: str):
     installation_dir = DESKTOP_MANAGER_BIN_PATH.joinpath(Path(f'./{name}'))
+    # desktop_file = LOCAL_DESKTOP_APP_PATH.joinpath(f'{name}.desktop')
     try:
         valid_dir(installation_dir)
+        # valid_file(desktop_file)
         return installation_dir, True
     except:
         return installation_dir, False
@@ -84,13 +89,16 @@ def get_desktop_path(name):
     except:
         return desktop_path, False
 
-def install(args):
-    target_folder, exists = get_installed(args.name)
-    if exists:
-        print(args.name,"is already installed. Use desktop-manager.py uninstall",args.name,"to uninstall.")
+# Actions
+
+def install_application(name, exec=None, icon=None, comment=None, delete=True):
+    target_folder, exists = get_installed(name)
+    desktop_path, exists2 = get_desktop_path(name)
+    if exists or exists2:
+        print(f'{NOTICE} {name} is already installed. Use desktop-manager.py uninstall {name} to uninstall.')
         return
     
-    prompt = input(f'{PROMPT} You are about to install {args.name} with executable "{args.executable if args.executable else "[NONE]"}" and icon "{args.icon if args.icon else "[NONE]"}".\nIs this okay? [y/N] ')
+    prompt = input(f'{PROMPT} You are about to install {name} with executable "{exec if exec else "[NONE]"}" and icon "{icon if icon else "[NONE]"}".\nIs this okay? [y/N] ')
     
     if prompt != "y":
         print("Action cancelled by user.")
@@ -98,42 +106,68 @@ def install(args):
     
     try:
         make_directory_if_needed(target_folder)
-        if args.executable:
-            move_file(args.executable, target_folder, copy=not args.delete)
-        if args.icon:
-            move_file(args.icon, target_folder, copy=not args.delete)
-
-        desktop_file_path, valid = get_desktop_path(args.name)
+        if exec:
+            move_file(exec, target_folder, copy=not delete)
+        if icon:
+            move_file(icon, target_folder, copy=not delete)
         
         desktop_file_string = populate_desktop_file_string(
-            name=args.name,
-            icon=args.icon,
-            exec=args.executable
+            name=name,
+            icon=icon,
+            exec=exec,
+            comment=comment
         )
-        desktop_file_path.write_text(desktop_file_string)
-        print(f'{SUCCESS} {args.name} is now installed into {target_folder}.')
-        os.system(f'update-desktop-database {LOCAL_DESKTOP_APP_PATH} && desktop-file-validate {desktop_file_path}')
+        desktop_path.write_text(desktop_file_string)
+        os.system(f'update-desktop-database {LOCAL_DESKTOP_APP_PATH} && desktop-file-validate {desktop_path}')
+        print(f'{SUCCESS} {name} is now installed into {target_folder}.')
         
     except Exception as e:
-        print("There was a problem (reverting changes):",e.message)
+        print("There was a problem (reverting changes):",e)
 
+def basic_install(args):
+    # Create a hidden root window
+    root = tk.Tk()
+    root.withdraw()
 
-def update(args):
-    pass
+    print(f'Desktop Manager install wizard v{VERSION}')
+    try:
+        exec_path = Path(filedialog.askopenfilename(title="Select an executable", filetypes=[("All files", "*.*")], initialdir=Path.cwd()))
+        icon_path = Path(filedialog.askopenfilename(title="Select an icon", filetypes=[("All files", "*.*")], initialdir=Path.cwd()))
+    except:
+        print(f'{NOTICE} Did not select a file, or selected an invalid file. Quitting...')
+        return
+    name = input("Write the application name: ")
+    comment = input("Write a description for this application: ")
 
-def uninstall(args):
-    target_folder, exists = get_installed(args.name)
+    delete = input("Delete the files afterwards? [y/N]: ") == "y"
+
+    install_application(name, exec=exec_path, icon=icon_path, comment=comment, delete=delete)
+
+def basic_uninstall(args):
+    choices = list_installed(None)
+    
+    user_choice = input("Select one of the options above to uninstall (leave blank to cancel): ")
+
+    if user_choice and user_choice in choices:
+        uninstall_application(user_choice)
+    else:
+        print("Selection canceled, or invalid option.")
+
+def uninstall_application(name):
+    target_folder, exists = get_installed(name)
     if not exists:
-        print(f'{NOTICE} {args.name} is not installed.')
+        print(f'{NOTICE} {name} is not installed.')
         return
     shutil.rmtree(target_folder)
-    desktop_path, valid = get_desktop_path(args.name)
+    desktop_path, valid = get_desktop_path(name)
     if valid:
         desktop_path.unlink()
-    print(f'{SUCCESS} Successfully uninstalled {args.name}.')
+    print(f'{SUCCESS} Successfully uninstalled {name}.')
 
-def list(args):
-    pass
+def list_installed(args):
+    choices = os.listdir(DESKTOP_MANAGER_BIN_PATH)
+    print(f'Currently installed: {choices}')
+    return choices
 
 def no_action(args):
     print("No action specified. Use -h for help.")
@@ -147,25 +181,30 @@ subparsers = parser.add_subparsers(title="actions",description="valid actions",h
 # Actions for Desktop Manager #
 ###############################
 # INSTALL COMMAND
-install_parser = subparsers.add_parser("install",help="add an executable to Desktop Manager")
-install_parser.set_defaults(func=install)
-install_parser.add_argument("-n","--name",required=True,dest="name",help="the name of the desktop shortcut")
-install_parser.add_argument("-e","--executable",required=True,dest="executable",type=valid_file,help="the path of the executable to install")
-install_parser.add_argument("-i","--icon",type=valid_file,required=False,dest="icon",help="the icon of the desktop shortcut")
-install_parser.add_argument("-d","--delete",type=argparse.BooleanOptionalAction,required=False,dest="delete",help="delete the source executable and ")
+# install_parser = subparsers.add_parser("install",help="add an executable to Desktop Manager")
+# install_parser.set_defaults(func=install)
+# install_parser.add_argument("-n","--name",required=True,dest="name",help="the name of the desktop shortcut")
+# install_parser.add_argument("-e","--executable",required=True,dest="executable",type=valid_file,help="the path of the executable to install")
+# install_parser.add_argument("-i","--icon",type=valid_file,required=False,dest="icon",help="the icon of the desktop shortcut")
+# install_parser.add_argument("-d","--delete",type=argparse.BooleanOptionalAction,required=False,dest="delete",help="delete the source executable and ")
+basic_install_parser = subparsers.add_parser("basic-install",help="open a basic installation wizard for a single application")
+basic_install_parser.set_defaults(func=basic_install)
 # UPDATE COMMAND
 update_parser = subparsers.add_parser("update",help="update the executable or icon of a managed shortcut")
 update_parser.add_argument("-n","--name",dest="name",help="update the name of the shortcut")
 update_parser.add_argument("-e","--executable",dest="executable",type=valid_file,help="update the executable of the shortcut")
 update_parser.add_argument("-i","--icon",dest="icon",type=valid_file,help="update the icon of the shortcut")
 # uninstall COMMAND
-uninstall_parser = subparsers.add_parser("uninstall",help="uninstall an executable from Desktop Manager")
-uninstall_parser.set_defaults(func=uninstall)
-uninstall_parser.add_argument("-n","--name",dest="name",help="the name of the desktop shortcut to uninstall")
-uninstall_parser.add_argument("-s","--save-path",dest="save",type=valid_dir,help="the path to save the executable and icon to If not specified, the executable and icon are deleted")
-uninstall_parser.add_argument("-p","--preserve",type=argparse.BooleanOptionalAction,required=False,dest="preserve",help="preserve the source executable and icon")
+# uninstall_parser = subparsers.add_parser("uninstall",help="uninstall an executable from Desktop Manager")
+# uninstall_parser.set_defaults(func=uninstall)
+# uninstall_parser.add_argument("-n","--name",dest="name",help="the name of the desktop shortcut to uninstall")
+# uninstall_parser.add_argument("-s","--save-path",dest="save",type=valid_dir,help="the path to save the executable and icon to If not specified, the executable and icon are deleted")
+# uninstall_parser.add_argument("-p","--preserve",type=argparse.BooleanOptionalAction,required=False,dest="preserve",help="preserve the source executable and icon")
+basic_uninstall_parser = subparsers.add_parser("basic-uninstall",help="open a basic uninstall wizard for currently installed applications")
+basic_uninstall_parser.set_defaults(func=basic_uninstall)
 # LIST COMMAND
 list_parser = subparsers.add_parser("list", help="list app shortcuts managed by Desktop Manager")
+list_parser.set_defaults(func=list_installed)
 
 args = parser.parse_args()
 args.func(args)
