@@ -3,8 +3,13 @@
 
 VERSION = "0.0.1"
 
+
 import argparse, os
 from pathlib import Path
+
+
+LOCAL_DESKTOP_APP_PATH = Path("~/.local/share/applications/")
+DESKTOP_MANAGER_BIN_PATH = Path("~/.desktop-manager/")
 
 def valid_dir(path):
     if os.path.isdir(path):
@@ -17,6 +22,13 @@ def valid_file(path):
         return Path(path)
     else:
         raise FileNotFoundError(path)
+
+def validate_dir(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+def move_file(p_from, p_to):
+    os.rename(p_from, p_to)
 
 parser = argparse.ArgumentParser(
     description="command-line utility to create and manage custom '.desktop' applications in Linux!"
@@ -45,7 +57,8 @@ list_parser = subparsers.add_parser("list", help="list app shortcuts managed by 
 args = parser.parse_args()
 
 def install(args):
-    pass
+    target_folder = LOCAL_DESKTOP_APP_PATH.joinpath(Path(f'./{args.name}'))
+    print(target_folder)
 
 def update(args):
     pass
