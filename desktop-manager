@@ -118,7 +118,7 @@ def install(args):
 def update(args):
     pass
 
-def remove(args):
+def uninstall(args):
     target_folder, exists = get_installed(args.name)
     if not exists:
         print(f'{NOTICE} {args.name} is not installed.')
@@ -127,7 +127,7 @@ def remove(args):
     desktop_path, valid = get_desktop_path(args.name)
     if valid:
         desktop_path.unlink()
-    print(f'{SUCCESS} Successfully removed {args.name}.')
+    print(f'{SUCCESS} Successfully uninstalld {args.name}.')
 
 def list(args):
     pass
@@ -155,12 +155,12 @@ update_parser = subparsers.add_parser("update",help="update the executable or ic
 update_parser.add_argument("-n","--name",dest="name",help="update the name of the shortcut")
 update_parser.add_argument("-e","--executable",dest="executable",type=valid_file,help="update the executable of the shortcut")
 update_parser.add_argument("-i","--icon",dest="icon",type=valid_file,help="update the icon of the shortcut")
-# REMOVE COMMAND
-remove_parser = subparsers.add_parser("remove",help="remove an executable from Desktop Manager")
-remove_parser.set_defaults(func=remove)
-remove_parser.add_argument("-n","--name",dest="name",help="the name of the desktop shortcut to remove")
-remove_parser.add_argument("-s","--save-path",dest="save",type=valid_dir,help="the path to save the executable and icon to If not specified, the executable and icon are deleted")
-remove_parser.add_argument("-p","--preserve",type=argparse.BooleanOptionalAction,required=False,dest="preserve",help="preserve the source executable and icon")
+# uninstall COMMAND
+uninstall_parser = subparsers.add_parser("uninstall",help="uninstall an executable from Desktop Manager")
+uninstall_parser.set_defaults(func=uninstall)
+uninstall_parser.add_argument("-n","--name",dest="name",help="the name of the desktop shortcut to uninstall")
+uninstall_parser.add_argument("-s","--save-path",dest="save",type=valid_dir,help="the path to save the executable and icon to If not specified, the executable and icon are deleted")
+uninstall_parser.add_argument("-p","--preserve",type=argparse.BooleanOptionalAction,required=False,dest="preserve",help="preserve the source executable and icon")
 # LIST COMMAND
 list_parser = subparsers.add_parser("list", help="list app shortcuts managed by Desktop Manager")
 
