@@ -39,8 +39,8 @@ subparsers = parser.add_subparsers(title="actions",description="valid actions",h
 ###############################
 # INSTALL COMMAND
 install_parser = subparsers.add_parser("install",help="add an executable to Desktop Manager")
-install_parser.add_argument("name",help="the name of the desktop shortcut")
-install_parser.add_argument("executable",type=valid_file,help="the path of the executable to install")
+install_parser.add_argument("-n","--name",required=True,help="the name of the desktop shortcut")
+install_parser.add_argument("-e","--executable",required=True,type=valid_file,help="the path of the executable to install")
 install_parser.add_argument("-i","--icon",type=valid_file,required=False,help="the icon of the desktop shortcut")
 # UPDATE COMMAND
 update_parser = subparsers.add_parser("update",help="update the executable or icon of a managed shortcut")
